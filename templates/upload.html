@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Upload AMC PDF & Business Excel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div
+      class="bg-white p-8 rounded-lg shadow-lg w-[50%] min-h-[55vh] max-h-fit"
+    >
+      <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+        Upload AMC PDF & Business Excel
+      </h2>
+      <div
+        id="errorMessage"
+        class="hidden text-red-600 text-sm text-center mb-4"
+      ></div>
+      <form
+        method="POST"
+        action="/upload"
+        enctype="multipart/form-data"
+        id="uploadForm"
+        class="space-y-6"
+      >
+        <div>
+          <label for="pdf" class="block text-sm font-medium text-gray-700 mb-2"
+            >AMC PDF File:</label
+          >
+          <input
+            type="file"
+            name="pdf"
+            id="pdf"
+            accept=".pdf"
+            required
+            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
+          />
+          <p
+            id="pdfFileName"
+            class="mt-4 text-sm text-gray-600 flex items-center"
+          ></p>
+        </div>
+        <div>
+          <label
+            for="excel"
+            class="block text-sm font-medium text-gray-700 mb-2"
+            >Business Excel File:</label
+          >
+          <input
+            type="file"
+            name="excel"
+            id="excel"
+            accept=".xlsx,.xls"
+            required
+            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
+          />
+          <p
+            id="excelFileName"
+            class="mt-4 text-sm text-gray-600 flex items-center"
+          ></p>
+        </div>
+        <button
+          type="submit"
+          id="submitButton"
+          class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          disabled
+        >
+          Upload
+        </button>
+      </form>
+      <div id="progressContainer" class="hidden mt-4">
+        <p class="text-sm text-gray-600 text-center">Uploading...</p>
+        <div class="w-full bg-gray-200 rounded-full h-2.5">
+          <div
+            id="progressBar"
+            class="bg-indigo-600 h-2.5 rounded-full"
+            style="width: 0%"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const pdfInput = document.getElementById("pdf");
+      const excelInput = document.getElementById("excel");
+      const submitButton = document.getElementById("submitButton");
+      const pdfFileName = document.getElementById("pdfFileName");
+      const excelFileName = document.getElementById("excelFileName");
+      const progressContainer = document.getElementById("progressContainer");
+      const progressBar = document.getElementById("progressBar");
+      const uploadForm = document.getElementById("uploadForm");
+      const errorMessage = document.getElementById("errorMessage");
+
+      const pdfIcon = `
+        <svg class="w-5 h-5 mr-2 text-red-600" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M6 2C4.89 2 4 2.89 4 4v16c0 1.11.89 2 2 2h12c1.11 0 2-.89 2-2V8l-6-6H6zm7 1.5L18.5 9H13V3.5zM9 12h2v2H9v-2zm0 4h6v2H9v-2zm8-4h2v6h-2v-6z"/>
+        </svg>
+      `;
+      const excelIcon = `
+        <img src="static/Assets/excel.png" class="w-5 h-5 mr-2" alt="Excel icon" />
+      `;
+
+      function checkFiles() {
+        const pdfSelected = pdfInput.files.length > 0;
+        const excelSelected = excelInput.files.length > 0;
+        submitButton.disabled = !(pdfSelected && excelSelected);
+      }
+
+      function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.classList.remove("hidden");
+        setTimeout(() => errorMessage.classList.add("hidden"), 5000);
+      }
+
+      pdfInput.addEventListener("change", () => {
+        if (pdfInput.files.length > 0) {
+          const file = pdfInput.files[0];
+          const extension = file.name.split(".").pop().toLowerCase();
+          if (extension !== "pdf") {
+            showError("Please select a valid PDF file");
+            pdfInput.value = "";
+            return;
+          }
+          pdfFileName.innerHTML = `${pdfIcon} ${file.name}`;
+          pdfFileName.classList.add("bg-red-100", "rounded-md", "px-2", "py-4");
+        } else {
+          pdfFileName.innerHTML = "";
+          pdfFileName.classList.remove(
+            "bg-red-100",
+            "rounded-md",
+            "px-2",
+            "py-4"
+          );
+        }
+        checkFiles();
+      });
+
+      excelInput.addEventListener("change", () => {
+        if (excelInput.files.length > 0) {
+          const file = excelInput.files[0];
+          const extension = file.name.split(".").pop().toLowerCase();
+          if (extension !== "xlsx" && extension !== "xls") {
+            showError("Please select a valid Excel file (.xlsx or .xls)");
+            excelInput.value = "";
+            return;
+          }
+          excelFileName.innerHTML = `${excelIcon} ${file.name}`;
+          excelFileName.classList.add(
+            "bg-green-100",
+            "rounded-md",
+            "px-2",
+            "py-4"
+          );
+        } else {
+          excelFileName.innerHTML = "";
+          excelFileName.classList.remove(
+            "bg-green-100",
+            "rounded-md",
+            "px-2",
+            "py-4"
+          );
+        }
+        checkFiles();
+      });
+
+      uploadForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        progressContainer.classList.remove("hidden");
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += 10;
+          progressBar.style.width = `${progress}%`;
+          if (progress >= 100) {
+            clearInterval(interval);
+          }
+        }, 200);
+
+        const formData = new FormData(uploadForm);
+        fetch("/upload", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => {
+            if (!response.ok) {
+              return response.json().then((data) => {
+                throw new Error(data.error || "Upload failed");
+              });
+            }
+            const contentDisposition = response.headers.get(
+              "Content-Disposition"
+            );
+            let filename = "filled_brokerage.xlsx";
+            if (
+              contentDisposition &&
+              contentDisposition.includes("filename=")
+            ) {
+              filename = contentDisposition
+                .split("filename=")[1]
+                .replace(/"/g, "");
+            }
+            return response.blob().then((blob) => ({ blob, filename }));
+          })
+          .then(({ blob, filename }) => {
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            progressContainer.classList.add("hidden");
+            progressBar.style.width = "0%";
+          })
+          .catch((error) => {
+            showError(`Upload failed: ${error.message}`);
+            progressContainer.classList.add("hidden");
+            progressBar.style.width = "0%";
+          });
+      });
+    </script>
+  </body>
+</html>
